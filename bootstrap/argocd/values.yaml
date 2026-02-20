@@ -1,0 +1,57 @@
+global:
+  domain: argocd.iac.internal # update to your domain
+
+configs:
+  params:
+    server.insecure: false # TLS terminated at ingress/gateway
+  cm:
+    # Allow ApplicationSets in any namespace (if needed later)
+    application.resourceTrackingMethod: annotation
+
+server:
+  ingress:
+    enabled: false # managed via Gateway API
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+applicationSet:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+controller:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+  extraArgs:
+    - --repo-server-timeout-seconds=300
+
+redis:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+repoServer:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+notifications:
+  enabled: false # enable when ready

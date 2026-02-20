@@ -1,0 +1,57 @@
+external-dns:
+  provider:
+    name: google
+
+  # Sources to watch for DNS annotations
+  sources:
+    - service
+    - ingress
+    - gateway-httproute  # GKE Gateway API (CHANNEL_STANDARD enabled)
+
+  # TXT registry to track owned records — unique per cluster
+  txtOwnerId: stg-iac-01-ause2
+  txtPrefix: "edns-"
+
+  # sync: create and delete records (safe for stg)
+  # upsert-only: never delete (safer for prod)
+  policy: sync
+
+  # Kubernetes service account — annotated with GCP SA for Workload Identity
+  serviceAccount:
+    create: true
+    name: external-dns
+    annotations: {}  # GCP SA annotation set in values-<env>.yaml
+
+  # GCP project and zone visibility — set in values-<env>.yaml
+  google:
+    project: ""
+    zoneVisibility: ""  # "" = both public and private
+
+  # Domain filters — set in values-<env>.yaml
+  domainFilters: []
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+  # Run as non-root
+  podSecurityContext:
+    fsGroup: 65534
+    runAsNonRoot: true
+    runAsUser: 65534
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+  # Log format for structured logging
+  logFormat: json
+  logLevel: info

@@ -1,0 +1,9 @@
+# Helm — ArgoCD downloads charts at sync time
+charts/
+*.tgz
+
+# Secrets — never commit
+*secret*.yaml
+*secrets*.yaml
+*.env
+raja.txt

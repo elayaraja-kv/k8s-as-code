@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: addons
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/elayaraja-kv/k8s-as-code.git
+        revision: main
+        directories:
+          - path: addons/*
+  template:
+    metadata:
+      name: "addon-{{path.basename}}"
+      labels:
+        cluster: stg-iac-01-ause2
+        type: addon
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/elayaraja-kv/k8s-as-code.git
+        targetRevision: main
+        path: "{{path}}"
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-stg.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{path.basename}}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas  # allow HPA to manage replicas

@@ -1,0 +1,15 @@
+external-dns:
+  # Workload Identity — matches GCP SA created in infra-as-code:
+  # nz3es/gcp/stg/data-plane/iac-01/global/iam/serviceaccounts/serviceaccounts-k8s/external-dns
+  serviceAccount:
+    annotations:
+      iam.gke.io/gcp-service-account: external-dns@iac-01.iam.gserviceaccount.com
+
+  google:
+    project: iac-01
+    zoneVisibility: ""  # manage both iac.com (public) and iac.internal (private)
+
+  # Filter to only manage these zones — matches infra-as-code dns-zone units
+  domainFilters:
+    - iac.com
+    - iac.internal

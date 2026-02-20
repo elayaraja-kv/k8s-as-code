@@ -1,0 +1,12 @@
+apiVersion: v2
+name: external-dns
+description: external-dns addon — manages DNS records for GCP Cloud DNS zones
+type: application
+version: 1.0.0
+
+dependencies:
+  - name: external-dns
+    # Official chart — images from registry.k8s.io (no Docker Hub dependency)
+    # Pin to latest: helm search repo external-dns/external-dns --versions
+    version: "1.15.0"
+    repository: https://kubernetes-sigs.github.io/external-dns/
