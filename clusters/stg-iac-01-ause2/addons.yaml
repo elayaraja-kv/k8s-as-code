@@ -43,8 +43,15 @@ spec:
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
+          - RespectIgnoreDifferences=true
       ignoreDifferences:
         - group: apps
           kind: Deployment
           jsonPointers:
             - /spec/replicas # allow HPA to manage replicas
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          name: httproutes.gateway.networking.k8s.io
+          jsonPointers:
+            - /spec/versions
+            - /status/storedVersions # GKE-managed CRD — do not reconcile
