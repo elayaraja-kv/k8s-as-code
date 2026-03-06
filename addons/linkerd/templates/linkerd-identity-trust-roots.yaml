@@ -1,0 +1,15 @@
+---
+# When identity.externalCA=true, the linkerd-control-plane chart does NOT create this ConfigMap.
+# Linkerd pods still need it to load the trust anchor for mTLS validation.
+# We create it here from the same identityTrustAnchorsPEM value.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: linkerd-identity-trust-roots
+  namespace: linkerd
+  labels:
+    linkerd.io/control-plane-component: identity
+    linkerd.io/control-plane-ns: linkerd
+data:
+  ca-bundle.crt: |-
+    {{- index .Values "linkerd-control-plane" "identityTrustAnchorsPEM" | trim | nindent 4 }}
