@@ -1,0 +1,14 @@
+{
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/applicationset_v1alpha1.json": [
+      "clusters/**/addons.yaml",
+      "clusters/**/apps.yaml"
+    ],
+    "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/argoproj.io/application_v1alpha1.json": [
+      "bootstrap/root-app.yaml"
+    ],
+    "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/cert-manager.io/certificate_v1.json": [
+      "addons/linkerd/templates/linkerd-identity-issuer.yaml"
+    ]
+  }
+}

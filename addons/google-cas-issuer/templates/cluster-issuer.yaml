@@ -1,0 +1,8 @@
+apiVersion: cas-issuer.jetstack.io/v1beta1
+kind: GoogleCASClusterIssuer
+metadata:
+  name: linkerd-cas-issuer
+spec:
+  project: {{ .Values.clusterIssuer.project }}
+  location: {{ .Values.clusterIssuer.location }}
+  caPoolId: {{ .Values.clusterIssuer.caPoolId }}

@@ -1,0 +1,11 @@
+google-cas-issuer:
+  # Workload Identity — matches GCP SA created in infra-as-code:
+  # nz3es/gcp/stg/data-plane/iac-01/global/iam/serviceaccounts/serviceaccounts-k8s/google-cas-issuer
+  serviceAccount:
+    annotations:
+      iam.gke.io/gcp-service-account: google-cas-issuer@iac-01.iam.gserviceaccount.com
+
+clusterIssuer:
+  project: iac-01
+  location: australia-southeast2
+  caPoolId: linkerd-stg-01  # terragrunt output: ca_pool_name (private-ca/linkerd)
