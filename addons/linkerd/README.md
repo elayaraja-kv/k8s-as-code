@@ -1,5 +1,8 @@
 # Linkerd Service Mesh
 
+Linkerd edge channel (`2026.3.1`) with native sidecar support (`proxy.nativeSidecar: true`).
+Required for GKE Autopilot and proper Job/batch workload support (K8s 1.29+).
+
 ## Prerequisites
 
 **cert-manager must be healthy before syncing Linkerd.**
@@ -13,9 +16,9 @@ kubectl get pods -n cert-manager
 
 ## How certificates work
 
-Linkerd uses a three-tier certificate model regardless of which CA option you choose:
+Linkerd uses a three-tier certificate model:
 
-```
+```text
 Trust anchor (root CA)
         |
         └── Issuer cert          — cert-manager issues and auto-rotates (every 48h)
@@ -34,14 +37,67 @@ Trust anchor (root CA)
 
 ## CA Options
 
-### Option A — GCP Private CA (current setup)
+### Option A — Local CA via cert-manager (current setup)
 
-> Used in this repo. The trust anchor key is HSM-backed in GCP — no manual key management.
+> Used in this repo. Trust anchor is a self-signed ECDSA P256 root CA.
+> Key is stored in GCP Secret Manager — no HSM but no ongoing cost.
+
+**Step 1 — Generate trust anchor (one-time):**
+
+```bash
+# Generate ECDSA P256 root CA (10-year validity)
+openssl ecparam -name prime256v1 -genkey -noout -out ca.key
+openssl req -new -x509 -key ca.key \
+  -subj "/O=cluster.local/CN=root.linkerd.cluster.local" \
+  -days 3650 -extensions v3_ca -out ca.crt
+```
+
+Store the key safely — it never goes in Git:
+
+```bash
+gcloud secrets create linkerd-trust-anchor-key --project <project-id> --data-file=ca.key
+gcloud secrets create linkerd-trust-anchor-cert --project <project-id> --data-file=ca.crt
+```
+
+**Step 2 — Paste the trust anchor cert into values-stg.yaml:**
+
+```bash
+cat ca.crt
+# Copy output → replace identityTrustAnchorsPEM in values-stg.yaml
+```
+
+**Step 3 — Load the trust anchor secret into the cluster:**
+
+cert-manager's `ClusterIssuer` (type `ca`) reads the key from the **cert-manager namespace**:
+
+```bash
+kubectl create secret tls linkerd-trust-anchor \
+  --namespace cert-manager \
+  --cert=ca.crt \
+  --key=ca.key
+
+rm ca.key ca.crt   # safe to delete — key is in GCP Secret Manager
+```
+
+**Step 4 — Sync via ArgoCD:**
+
+```bash
+argocd app sync addon-cert-manager  # wait until healthy
+argocd app sync addon-linkerd
+```
+
+---
+
+### Option B — GCP Private CA (Certificate Authority Service)
+
+> Use this for production where HSM-backed keys are required.
+> **Requires ENTERPRISE tier CA pool** (~$200/month) — DEVOPS tier cannot issue `isCA:true`
+> certificates required by Linkerd's identity issuer.
 
 **Prerequisites (infra-as-code):**
 
 ```bash
-# 1. Provision the CA pool + root CA
+# 1. Provision the ENTERPRISE CA pool + root CA
 cd nz3es/gcp/stg/data-plane/iac-01/australia-southeast2/private-ca/linkerd
 terragrunt apply
 
@@ -50,12 +106,18 @@ cd nz3es/gcp/stg/data-plane/iac-01/global/iam/serviceaccounts/serviceaccounts-k8
 terragrunt apply
 ```
 
-**Get the trust anchor cert** (already done — committed in `values-stg.yaml`):
+**Get the trust anchor cert:**
 
 ```bash
 terragrunt output -raw ca_cert_pem
 # Paste into identityTrustAnchorsPEM in values-stg.yaml
 ```
+
+**Enable google-cas-issuer:**
+
+1. Uncomment `addons/google-cas-issuer` in `clusters/<cluster>/addons-prereqs.yaml`
+2. Update `addons/google-cas-issuer/values-<env>.yaml` with project, location, caPoolId
+3. Update `issuerRef` in `templates/linkerd-identity-issuer.yaml` to use `GoogleCASClusterIssuer`
 
 **ArgoCD sync order:**
 
@@ -63,69 +125,6 @@ terragrunt output -raw ca_cert_pem
 argocd app sync addon-cert-manager       # 1. wait until healthy
 argocd app sync addon-google-cas-issuer  # 2. wait until healthy
 argocd app sync addon-linkerd            # 3.
-```
-
-No Kubernetes secret bootstrap required — cert-manager authenticates to GCP via Workload Identity.
-
----
-
-### Option B — Self-managed CA (manual, no GCP dependency)
-
-> Use this if GCP Private CA is not available or for local development.
-
-**Step 1 — Install tools:**
-
-```bash
-brew install step    # smallstep CLI
-brew install linkerd # Linkerd CLI
-```
-
-**Step 2 — Generate trust anchor (one-time):**
-
-```bash
-step certificate create root.linkerd.iac.internal ca.crt ca.key \
-  --profile root-ca \
-  --no-password \
-  --insecure \
-  --not-after 87600h
-```
-
-Store the key safely — it never goes in Git:
-
-```bash
-gcloud secrets create linkerd-trust-anchor-key \
-  --project iac-01 \
-  --data-file=ca.key
-```
-
-**Step 3 — Paste the trust anchor cert into values-stg.yaml:**
-
-```bash
-cat ca.crt
-# Copy output → replace identityTrustAnchorsPEM in values-stg.yaml
-```
-
-**Step 4 — Load the trust anchor secret into the cluster:**
-
-cert-manager needs the key to sign the issuer cert via the `ca` Issuer in
-`templates/linkerd-identity-issuer.yaml`:
-
-```bash
-kubectl create namespace linkerd --dry-run=client -o yaml | kubectl apply -f -
-
-kubectl create secret tls linkerd-trust-anchor \
-  --namespace linkerd \
-  --cert=ca.crt \
-  --key=ca.key
-
-rm ca.key ca.crt   # safe to delete — key is in GCP Secret Manager
-```
-
-**Step 5 — Sync via ArgoCD:**
-
-```bash
-argocd app sync addon-cert-manager  # wait until healthy
-argocd app sync addon-linkerd
 ```
 
 ---
@@ -145,6 +144,16 @@ linkerd check
 ```
 
 All checks should pass. The issuer cert renews automatically every 48h.
+
+**Verify native sidecar:**
+
+```bash
+# linkerd-proxy must appear as an initContainer with restartPolicy=Always
+kubectl get pod -n <meshed-namespace> -o jsonpath='{range .items[0].spec.initContainers[*]}{.name}: restartPolicy={.restartPolicy}{"\n"}{end}'
+# Expected:
+#   linkerd-init: restartPolicy=
+#   linkerd-proxy: restartPolicy=Always
+```
 
 ---
 
@@ -173,7 +182,9 @@ spec:
 | Symptom | Cause | Fix |
 |---|---|---|
 | `linkerd check` fails on identity | Issuer cert not issued | Check `kubectl get certificate -n linkerd` |
-| `Certificate` stays `False` (Option A) | `google-cas-issuer` not running or WI not set up | Check `kubectl get pods -n google-cas-issuer` |
-| `Certificate` stays `False` (Option B) | `linkerd-trust-anchor` secret missing | Run Option B Step 4 |
+| `Certificate` stays `False` (Option A) | `linkerd-trust-anchor` secret missing in `cert-manager` namespace | Run Option A Step 3 |
+| `Certificate` stays `False` (Option B) | `google-cas-issuer` not running or WI not set up | Check `kubectl get pods -n google-cas-issuer` |
 | Pods not getting proxies | Namespace not annotated | Run `kubectl annotate namespace` above |
 | `linkerd check` TLS errors | Trust anchor cert mismatch | Re-paste cert into `identityTrustAnchorsPEM` |
+| Linkerd identity fatal: "must be intermediate-CA" | GCP CAS DEVOPS tier used | Switch to ENTERPRISE tier (Option B) or use Option A |
+| DNS resolution fails (`svc.iac.internal`) | Wrong `clusterDomain` | Set `clusterDomain: cluster.local` in values |
