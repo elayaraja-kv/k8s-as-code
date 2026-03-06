@@ -1,0 +1,11 @@
+apiVersion: v2
+name: cert-manager
+description: cert-manager — certificate lifecycle management, used by Linkerd for issuer cert rotation
+type: application
+version: 1.0.0
+
+# Check latest: helm search repo cert-manager/cert-manager --versions
+dependencies:
+  - name: cert-manager
+    version: "1.16.3"
+    repository: https://charts.jetstack.io
