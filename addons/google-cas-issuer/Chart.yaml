@@ -4,8 +4,9 @@ description: Google CAS Issuer — cert-manager plugin for GCP Certificate Autho
 type: application
 version: 1.0.0
 
-# Check latest: helm search repo cas-issuer/google-cas-issuer --versions
+# Check latest: helm search repo jetstack/google-cas-issuer --versions
+# Add repo: helm repo add jetstack https://charts.jetstack.io
 dependencies:
   - name: google-cas-issuer
     version: "0.7.0"
-    repository: https://googlecloudplatform.github.io/cas-issuer
+    repository: https://charts.jetstack.io
