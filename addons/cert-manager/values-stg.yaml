@@ -1,0 +1,9 @@
+cert-manager:
+  # Stg: single replica is sufficient
+  replicaCount: 1
+
+  webhook:
+    replicaCount: 1
+
+  cainjector:
+    replicaCount: 1
