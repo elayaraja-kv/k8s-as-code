@@ -1,0 +1,19 @@
+linkerd-control-plane:
+  # Trust anchor (root CA) — public cert from GCP Private CA.
+  # Source: terragrunt output -raw ca_cert_pem (private-ca/linkerd)
+  identityTrustAnchorsPEM: |
+    -----BEGIN CERTIFICATE-----
+    MIIByjCCAXGgAwIBAgITEEOK6H67SezHKlCWqdb4EzgkSzAKBggqhkjOPQQDAjAy
+    MQwwCgYDVQQKEwNpYWMxIjAgBgNVBAMTGXJvb3QubGlua2VyZC5pYWMuaW50ZXJu
+    YWwwHhcNMjYwMzA2MDI0NDM0WhcNMzYwMzAzMDI0NDMzWjAyMQwwCgYDVQQKEwNp
+    YWMxIjAgBgNVBAMTGXJvb3QubGlua2VyZC5pYWMuaW50ZXJuYWwwWTATBgcqhkjO
+    PQIBBggqhkjOPQMBBwNCAATReGjH6cYYDCVGA+9YW6wExeLxF2/tSD1P+ROhRyC6
+    MncXIqM13jEnZvkOyVrlKIqdt5k9qKlmnyVNJkcfVoNTo2YwZDAOBgNVHQ8BAf8E
+    BAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBATAdBgNVHQ4EFgQUXm4Qeow1G3CtbBrI
+    CXLatRs8s2wwHwYDVR0jBBgwFoAUXm4Qeow1G3CtbBrICXLatRs8s2wwCgYIKoZI
+    zj0EAwIDRwAwRAIgSX4a5IU7A4GxFSFGX+gD1nU4EyP3sXAPCbpKibqVsEcCIBCl
+    Z7I/OglRudf0Sh3XOJ5uaDZAD+hJW8g0mhMrX3To
+    -----END CERTIFICATE-----
+
+  clusterDomain: iac.internal
+  controllerReplicas: 1
