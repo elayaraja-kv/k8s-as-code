@@ -1,0 +1,43 @@
+linkerd-control-plane:
+  # externalCA: true — cert-manager manages the issuer cert rotation automatically.
+  # Linkerd reads the issuer cert/key from the 'linkerd-identity-issuer' secret,
+  # which cert-manager keeps refreshed. You never touch the issuer key in Git.
+  #
+  # You still provide the trust anchor (root CA) below — it's a public cert (safe to commit)
+  # and almost never changes.
+  #
+  # Generate the trust anchor once (requires step CLI: https://smallstep.com/docs/step-cli/):
+  #   step certificate create root.linkerd.cluster.local ca.crt ca.key \
+  #     --profile root-ca --no-password --insecure
+  #
+  # Then paste ca.crt content into identityTrustAnchorsPEM in values-<env>.yaml.
+  # Store ca.key somewhere safe (e.g. GCP Secret Manager) — you only need it to sign
+  # a new issuer cert if you ever rotate the trust anchor (very rare).
+
+  identity:
+    externalCA: true
+    issuer:
+      scheme: kubernetes.io/tls  # reads from the 'linkerd-identity-issuer' secret
+
+  identityTrustAnchorsPEM: ""  # set in values-<env>.yaml
+
+  # Proxy injected into every meshed pod
+  proxy:
+    resources:
+      cpu:
+        request: 10m
+        limit: "1"
+      memory:
+        request: 20Mi
+        limit: 250Mi
+    logLevel: warn,linkerd=info
+
+  controllerReplicas: 1
+
+  podSecurityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  controllerLogFormat: json
+  controllerLogLevel: info
