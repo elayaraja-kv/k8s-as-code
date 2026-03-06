@@ -21,8 +21,11 @@ linkerd-control-plane:
 
   identityTrustAnchorsPEM: ""  # set in values-<env>.yaml
 
-  # Proxy injected into every meshed pod
+  # Proxy injected into every meshed pod.
+  # nativeSidecar: true uses Kubernetes native sidecar (initContainer + restartPolicy: Always)
+  # required for GKE Autopilot and proper job/batch workload support (K8s 1.29+).
   proxy:
+    nativeSidecar: true
     resources:
       cpu:
         request: 10m

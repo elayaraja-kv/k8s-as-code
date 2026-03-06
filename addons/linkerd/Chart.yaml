@@ -4,21 +4,18 @@ description: Linkerd service mesh — CRDs + control plane (umbrella chart)
 type: application
 version: 1.0.0
 
-# Linkerd stable Helm charts: https://helm.linkerd.io/stable
-# Check latest versions: helm search repo linkerd/linkerd-crds --versions
-#                        helm search repo linkerd/linkerd-control-plane --versions
-#
-# NOTE: Linkerd stable charts may require a Buoyant subscription.
-#       For the free edge channel use repository: https://helm.linkerd.io/edge
-#       and update chart versions accordingly.
+# Linkerd edge Helm charts: https://helm.linkerd.io/edge
+# Edge channel provides native sidecar support (required for GKE Autopilot).
+# Check latest versions: helm search repo linkerd-edge/linkerd-crds --versions
+#                        helm search repo linkerd-edge/linkerd-control-plane --versions
 #
 # Dependencies are installed in order: linkerd-crds first, then linkerd-control-plane.
 # This satisfies the CRD-before-controller ordering requirement.
 dependencies:
   - name: linkerd-crds
-    version: "1.8.0"
-    repository: https://helm.linkerd.io/stable
+    version: "2026.3.1"
+    repository: https://helm.linkerd.io/edge
 
   - name: linkerd-control-plane
-    version: "1.16.11"
-    repository: https://helm.linkerd.io/stable
+    version: "2026.3.1"
+    repository: https://helm.linkerd.io/edge
