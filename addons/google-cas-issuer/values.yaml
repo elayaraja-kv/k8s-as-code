@@ -1,8 +1,7 @@
 cert-manager-google-cas-issuer:
-  # KSA annotation set in values-<env>.yaml via Workload Identity
+  # KSA annotation set in values-<env>.yaml via Workload Identity.
+  # The chart always creates the SA; only annotations are configurable via schema.
   serviceAccount:
-    create: true
-    name: google-cas-issuer
     annotations: {}
 
   resources:
@@ -11,18 +10,6 @@ cert-manager-google-cas-issuer:
       memory: 32Mi
     limits:
       memory: 64Mi
-
-  securityContext:
-    runAsNonRoot: true
-    seccompProfile:
-      type: RuntimeDefault
-
-  containerSecurityContext:
-    allowPrivilegeEscalation: false
-    capabilities:
-      drop:
-        - ALL
-    readOnlyRootFilesystem: true
 
 # GoogleCASClusterIssuer — cluster-scoped issuer backed by GCP Private CA.
 # Referenced by the Certificate in addons/linkerd/templates/linkerd-identity-issuer.yaml.
