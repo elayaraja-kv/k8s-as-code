@@ -49,9 +49,13 @@ spec:
           kind: Deployment
           jsonPointers:
             - /spec/replicas # allow HPA to manage replicas
+        # GKE manages Gateway API CRDs — ignore all fields to prevent ArgoCD from
+        # trying to apply linkerd-crds' older CRD spec over GKE's managed version.
         - group: apiextensions.k8s.io
           kind: CustomResourceDefinition
           name: httproutes.gateway.networking.k8s.io
-          jsonPointers:
-            - /spec/versions
-            - /status/storedVersions # GKE-managed CRD — do not reconcile
+          jqPathExpressions:
+            - '.spec'
+            - '.status'
+            - '.metadata.annotations'
+            - '.metadata.labels'
