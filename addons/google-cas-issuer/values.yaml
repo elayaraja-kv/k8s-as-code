@@ -1,4 +1,4 @@
-google-cas-issuer:
+cert-manager-google-cas-issuer:
   # KSA annotation set in values-<env>.yaml via Workload Identity
   serviceAccount:
     create: true
