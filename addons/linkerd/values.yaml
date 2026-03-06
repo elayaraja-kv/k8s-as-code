@@ -28,11 +28,11 @@ linkerd-control-plane:
     nativeSidecar: true
     resources:
       cpu:
-        request: 10m
-        limit: "1"
+        request: 50m
+        limit: 100m
       memory:
-        request: 20Mi
-        limit: 250Mi
+        request: 64Mi
+        limit: 128Mi
     logLevel: warn,linkerd=info
 
   controllerReplicas: 1
