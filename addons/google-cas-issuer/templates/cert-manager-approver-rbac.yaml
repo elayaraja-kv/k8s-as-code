@@ -1,0 +1,33 @@
+---
+# cert-manager's built-in approver must be granted permission to approve
+# CertificateRequests that reference external issuers. Without this, the
+# cert-manager webhook rejects approval attempts for GoogleCASClusterIssuer.
+#
+# The cert-manager SA name is "addon-cert-manager" because the ArgoCD
+# ApplicationSet names Helm releases "addon-<dir>" (addon-cert-manager).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cert-manager-cas-issuer-approver
+rules:
+  - apiGroups:
+      - cert-manager.io
+    resources:
+      - signers
+    verbs:
+      - approve
+    resourceNames:
+      - "googlecasclusterissuers.cas-issuer.jetstack.io/*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cert-manager-cas-issuer-approver
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cert-manager-cas-issuer-approver
+subjects:
+  - kind: ServiceAccount
+    name: addon-cert-manager
+    namespace: cert-manager
