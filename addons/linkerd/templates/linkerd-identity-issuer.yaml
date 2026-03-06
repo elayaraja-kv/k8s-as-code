@@ -1,7 +1,6 @@
 ---
-# cert-manager Certificate — requests the Linkerd identity issuer cert from GCP Private CA.
-# cert-manager calls the google-cas-issuer controller (GoogleCASClusterIssuer) which
-# authenticates to GCP via Workload Identity and issues the cert from the CA pool.
+# cert-manager Certificate — requests the Linkerd identity issuer cert from the
+# local trust anchor ClusterIssuer (addons/linkerd/templates/cluster-issuer.yaml).
 # cert-manager writes the cert+key into 'linkerd-identity-issuer' secret (TLS type),
 # which Linkerd reads via identity.issuer.scheme: kubernetes.io/tls.
 # Rotation happens automatically before expiry (renewBefore: 25h).
@@ -15,12 +14,12 @@ spec:
   duration: 48h
   renewBefore: 25h
   issuerRef:
-    name: linkerd-cas-issuer       # GoogleCASClusterIssuer in addons/google-cas-issuer
-    kind: GoogleCASClusterIssuer
-    group: cas-issuer.jetstack.io
-  commonName: identity.linkerd.iac.internal
+    name: linkerd-trust-anchor     # ClusterIssuer in addons/linkerd/templates/cluster-issuer.yaml
+    kind: ClusterIssuer
+    group: cert-manager.io
+  commonName: identity.linkerd.cluster.local
   dnsNames:
-    - identity.linkerd.iac.internal
+    - identity.linkerd.cluster.local
   isCA: true
   privateKey:
     algorithm: ECDSA

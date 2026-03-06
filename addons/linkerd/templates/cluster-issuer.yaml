@@ -1,0 +1,19 @@
+---
+# cert-manager ClusterIssuer backed by the local trust anchor CA.
+# The 'linkerd-trust-anchor' secret (TLS type) must exist in the cert-manager
+# namespace before this issuer can become Ready. Create it once manually:
+#
+#   step certificate create root.linkerd.cluster.local ca.crt ca.key \
+#     --profile root-ca --no-password --insecure --not-after=87600h
+#   kubectl create secret tls linkerd-trust-anchor \
+#     --cert=ca.crt --key=ca.key --namespace=cert-manager
+#
+# The ca.crt content goes into identityTrustAnchorsPEM in values-<env>.yaml.
+# The ca.key never goes into Git.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: linkerd-trust-anchor
+spec:
+  ca:
+    secretName: linkerd-trust-anchor

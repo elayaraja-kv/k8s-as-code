@@ -1,19 +1,21 @@
 linkerd-control-plane:
-  # Trust anchor (root CA) — public cert from GCP Private CA.
-  # Source: terragrunt output -raw ca_cert_pem (private-ca/linkerd)
+  # Trust anchor (root CA) — local CA cert generated with openssl (ECDSA P256, 10yr).
+  # Paired private key lives in the 'linkerd-trust-anchor' secret in cert-manager namespace.
+  # Generate once and store ca.key safely (e.g. GCP Secret Manager) — never commit it.
   identityTrustAnchorsPEM: |
     -----BEGIN CERTIFICATE-----
-    MIIByjCCAXGgAwIBAgITEEOK6H67SezHKlCWqdb4EzgkSzAKBggqhkjOPQQDAjAy
-    MQwwCgYDVQQKEwNpYWMxIjAgBgNVBAMTGXJvb3QubGlua2VyZC5pYWMuaW50ZXJu
-    YWwwHhcNMjYwMzA2MDI0NDM0WhcNMzYwMzAzMDI0NDMzWjAyMQwwCgYDVQQKEwNp
-    YWMxIjAgBgNVBAMTGXJvb3QubGlua2VyZC5pYWMuaW50ZXJuYWwwWTATBgcqhkjO
-    PQIBBggqhkjOPQMBBwNCAATReGjH6cYYDCVGA+9YW6wExeLxF2/tSD1P+ROhRyC6
-    MncXIqM13jEnZvkOyVrlKIqdt5k9qKlmnyVNJkcfVoNTo2YwZDAOBgNVHQ8BAf8E
-    BAMCAQYwEgYDVR0TAQH/BAgwBgEB/wIBATAdBgNVHQ4EFgQUXm4Qeow1G3CtbBrI
-    CXLatRs8s2wwHwYDVR0jBBgwFoAUXm4Qeow1G3CtbBrICXLatRs8s2wwCgYIKoZI
-    zj0EAwIDRwAwRAIgSX4a5IU7A4GxFSFGX+gD1nU4EyP3sXAPCbpKibqVsEcCIBCl
-    Z7I/OglRudf0Sh3XOJ5uaDZAD+hJW8g0mhMrX3To
+    MIIB4DCCAYWgAwIBAgIUE3S/rGpVcrSA3OLgOyE/gI2ODNQwCgYIKoZIzj0EAwIw
+    PTEWMBQGA1UECgwNY2x1c3Rlci5sb2NhbDEjMCEGA1UEAwwacm9vdC5saW5rZXJk
+    LmNsdXN0ZXIubG9jYWwwHhcNMjYwMzA2MDcxNjE3WhcNMzYwMzAzMDcxNjE3WjA9
+    MRYwFAYDVQQKDA1jbHVzdGVyLmxvY2FsMSMwIQYDVQQDDBpyb290LmxpbmtlcmQu
+    Y2x1c3Rlci5sb2NhbDBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABHI3qa9IzyTP
+    uS5K9ecV0tX8NoGzUeJ4Omn9CiBEfU+j6vQEJ6zQ24ATkzDE0lt9H4nruWXB3W9t
+    CXHC/BhaeISjYzBhMB0GA1UdDgQWBBTUnHk3KrL3LOeMvuZipkmbaVI0ODAfBgNV
+    HSMEGDAWgBTUnHk3KrL3LOeMvuZipkmbaVI0ODAPBgNVHRMBAf8EBTADAQH/MA4G
+    A1UdDwEB/wQEAwIBBjAKBggqhkjOPQQDAgNJADBGAiEA6I1SVIv+Jb5qU2fZmdUE
+    Z2YKGZJBE6olRH2ykSMVfJ0CIQCO8deGu82nXoZI2hwZADtsxKUfi5hUYgccSZ7f
+    +0usNA==
     -----END CERTIFICATE-----
 
-  clusterDomain: iac.internal
+  clusterDomain: cluster.local
   controllerReplicas: 1
