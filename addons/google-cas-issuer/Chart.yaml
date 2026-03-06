@@ -1,0 +1,11 @@
+apiVersion: v2
+name: google-cas-issuer
+description: Google CAS Issuer — cert-manager plugin for GCP Certificate Authority Service
+type: application
+version: 1.0.0
+
+# Check latest: helm search repo cas-issuer/google-cas-issuer --versions
+dependencies:
+  - name: google-cas-issuer
+    version: "0.7.0"
+    repository: https://googlecloudplatform.github.io/cas-issuer

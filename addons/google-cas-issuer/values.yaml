@@ -1,0 +1,33 @@
+google-cas-issuer:
+  # KSA annotation set in values-<env>.yaml via Workload Identity
+  serviceAccount:
+    create: true
+    name: google-cas-issuer
+    annotations: {}
+
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+
+# GoogleCASClusterIssuer — cluster-scoped issuer backed by GCP Private CA.
+# Referenced by the Certificate in addons/linkerd/templates/linkerd-identity-issuer.yaml.
+# Values set in values-<env>.yaml.
+clusterIssuer:
+  project: ""
+  location: ""
+  caPoolId: ""
