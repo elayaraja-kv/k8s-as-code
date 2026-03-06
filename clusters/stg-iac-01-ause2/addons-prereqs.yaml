@@ -10,7 +10,7 @@ spec:
         revision: main
         directories:
           - path: addons/cert-manager
-          - path: addons/google-cas-issuer
+          # - path: addons/google-cas-issuer
   template:
     metadata:
       name: "addon-{{path.basename}}"
