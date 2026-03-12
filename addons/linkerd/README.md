@@ -27,8 +27,8 @@ Trust anchor (root CA)
 ```
 
 | Layer | Who manages it | Stored in Git? |
-|---|---|---|
-| Trust anchor cert | CA option (see below) | Public cert only — in `values-stg.yaml` |
+| --- | --- | --- |
+| Trust anchor cert | CA option (see below) | Public cert only — in `values-<env>.yaml` |
 | Trust anchor key | CA option (see below) | Never |
 | Issuer cert + key | cert-manager (automatic) | Never |
 | Workload mTLS certs | Linkerd (automatic) | Never |
@@ -42,7 +42,7 @@ Trust anchor (root CA)
 > Used in this repo. Trust anchor is a self-signed ECDSA P256 root CA.
 > Key is stored in GCP Secret Manager — no HSM but no ongoing cost.
 
-**Step 1 — Generate trust anchor (one-time):**
+**Step 1 — Generate trust anchor (one-time per cluster):**
 
 ```bash
 # Generate ECDSA P256 root CA (10-year validity)
@@ -59,11 +59,11 @@ gcloud secrets create linkerd-trust-anchor-key --project <project-id> --data-fil
 gcloud secrets create linkerd-trust-anchor-cert --project <project-id> --data-file=ca.crt
 ```
 
-**Step 2 — Paste the trust anchor cert into values-stg.yaml:**
+**Step 2 — Paste the trust anchor cert into `values-<env>.yaml`:**
 
 ```bash
 cat ca.crt
-# Copy output → replace identityTrustAnchorsPEM in values-stg.yaml
+# Copy output → replace identityTrustAnchorsPEM in addons/linkerd/values-<env>.yaml
 ```
 
 **Step 3 — Load the trust anchor secret into the cluster:**
@@ -98,11 +98,11 @@ argocd app sync addon-linkerd
 
 ```bash
 # 1. Provision the ENTERPRISE CA pool + root CA
-cd nz3es/gcp/stg/data-plane/iac-01/australia-southeast2/private-ca/linkerd
+cd nz3es/gcp/<env>/data-plane/<project>/australia-southeast2/private-ca/linkerd
 terragrunt apply
 
 # 2. Provision GCP SA + CA pool IAM for google-cas-issuer
-cd nz3es/gcp/stg/data-plane/iac-01/global/iam/serviceaccounts/serviceaccounts-k8s/google-cas-issuer
+cd nz3es/gcp/<env>/data-plane/<project>/global/iam/serviceaccounts/serviceaccounts-k8s/google-cas-issuer
 terragrunt apply
 ```
 
@@ -110,12 +110,12 @@ terragrunt apply
 
 ```bash
 terragrunt output -raw ca_cert_pem
-# Paste into identityTrustAnchorsPEM in values-stg.yaml
+# Paste into identityTrustAnchorsPEM in addons/linkerd/values-<env>.yaml
 ```
 
 **Enable google-cas-issuer:**
 
-1. Uncomment `addons/google-cas-issuer` in `clusters/<cluster>/addons-prereqs.yaml`
+1. Uncomment `addons/google-cas-issuer` in `clusters/<env>/<cluster>/addons-prereqs.yaml`
 2. Update `addons/google-cas-issuer/values-<env>.yaml` with project, location, caPoolId
 3. Update `issuerRef` in `templates/linkerd-identity-issuer.yaml` to use `GoogleCASClusterIssuer`
 
@@ -126,6 +126,21 @@ argocd app sync addon-cert-manager       # 1. wait until healthy
 argocd app sync addon-google-cas-issuer  # 2. wait until healthy
 argocd app sync addon-linkerd            # 3.
 ```
+
+---
+
+## Per-env configuration
+
+Values are layered: `values.yaml` (base) → `values-<env>.yaml` (env overrides).
+
+Key differences between envs:
+
+| Setting | stg | prd |
+| --- | --- | --- |
+| `controllerReplicas` | 1 | 3 |
+| `identityTrustAnchorsPEM` | stg trust anchor cert | prd trust anchor cert (generate separately) |
+
+Each env's trust anchor must be generated independently — they are separate root CAs.
 
 ---
 
@@ -180,7 +195,7 @@ spec:
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
-|---|---|---|
+| --- | --- | --- |
 | `linkerd check` fails on identity | Issuer cert not issued | Check `kubectl get certificate -n linkerd` |
 | `Certificate` stays `False` (Option A) | `linkerd-trust-anchor` secret missing in `cert-manager` namespace | Run Option A Step 3 |
 | `Certificate` stays `False` (Option B) | `google-cas-issuer` not running or WI not set up | Check `kubectl get pods -n google-cas-issuer` |

@@ -35,25 +35,27 @@ Linkerd reads secret → mTLS
 ### 1. GCP Private CA pool and root CA
 
 ```bash
-cd nz3es/gcp/stg/data-plane/iac-01/australia-southeast2/private-ca/linkerd
+cd nz3es/gcp/<env>/data-plane/<project>/australia-southeast2/private-ca/linkerd
 terragrunt apply
 ```
 
 Creates:
-- CA pool: `linkerd-stg-01` in `australia-southeast2`
+
+- CA pool (e.g. `linkerd-stg-01`) in `australia-southeast2`
 - Root CA: `linkerd-root-stg` (EC P256, HSM-backed, 10-year lifetime)
 
 ### 2. GCP Service Account + CA pool IAM
 
 ```bash
-cd nz3es/gcp/stg/data-plane/iac-01/global/iam/serviceaccounts/serviceaccounts-k8s/google-cas-issuer
+cd nz3es/gcp/<env>/data-plane/<project>/global/iam/serviceaccounts/serviceaccounts-k8s/google-cas-issuer
 terragrunt apply
 ```
 
 Creates:
-- GCP SA: `google-cas-issuer@iac-01.iam.gserviceaccount.com`
+
+- GCP SA: `google-cas-issuer@<project>.iam.gserviceaccount.com`
 - Workload Identity binding: allows the `google-cas-issuer` KSA to impersonate the GCP SA
-- CA pool IAM: grants `roles/privateca.certificateRequester` on the `linkerd-stg-01` pool
+- CA pool IAM: grants `roles/privateca.certificateRequester` on the CA pool
 
 ### 3. cert-manager must be healthy
 
@@ -66,7 +68,7 @@ kubectl get pods -n cert-manager
 
 ## ArgoCD sync order
 
-This addon is in **sync wave `-1`** (see `addons-prereqs.yaml`), meaning it deploys
+This addon is in **sync wave `-1`** (see `clusters/<env>/<cluster>/addons-prereqs.yaml`), meaning it deploys
 before wave-0 addons (linkerd, external-dns, etc.).
 
 ```
@@ -78,13 +80,34 @@ wave  0: addon-linkerd            ← Certificate issued → mTLS ready
 
 ---
 
+## Per-env configuration
+
+Values are layered: `values.yaml` (base) → `values-<env>.yaml` (env overrides).
+
+Update `values-<env>.yaml` with the env-specific GCP SA, project, and CA pool:
+
+```yaml
+# addons/google-cas-issuer/values-stg.yaml
+cert-manager-google-cas-issuer:
+  serviceAccount:
+    annotations:
+      iam.gke.io/gcp-service-account: google-cas-issuer@<stg-project>.iam.gserviceaccount.com
+
+clusterIssuer:
+  project: <stg-project>
+  location: australia-southeast2
+  caPoolId: <stg-ca-pool-name>
+```
+
+---
+
 ## What is deployed
 
 | Resource | Kind | Purpose |
-|---|---|---|
+| --- | --- | --- |
 | `google-cas-issuer` | Deployment | Controller that handles GCP CAS certificate requests |
 | `google-cas-issuer` | ServiceAccount | KSA annotated with GCP SA for Workload Identity |
-| `linkerd-cas-issuer` | GoogleCASClusterIssuer | Cluster-scoped issuer pointing at the `linkerd-stg-01` CA pool |
+| `linkerd-cas-issuer` | GoogleCASClusterIssuer | Cluster-scoped issuer pointing at the CA pool |
 
 ---
 
@@ -107,7 +130,7 @@ kubectl get certificate -n linkerd
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
-|---|---|---|
+| --- | --- | --- |
 | Controller pod `CrashLoopBackOff` | Workload Identity not set up | Verify terragrunt unit applied and KSA annotation is correct |
 | `GoogleCASClusterIssuer` not found | Controller not running | Check `kubectl get pods -n google-cas-issuer` |
 | `Certificate` stays `False` | IAM binding missing or CA pool wrong | Check `kubectl describe certificate linkerd-identity-issuer -n linkerd` for error |

@@ -14,7 +14,8 @@ spec:
     metadata:
       name: "app-{{path.basename}}"
       labels:
-        cluster: stg-iac-01-ause2
+        cluster: prd-iac-01-ause2
+        env: prd
         type: app
     spec:
       project: default
@@ -25,10 +26,8 @@ spec:
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{path.basename}}"
+      # Prd: no auto-sync — changes require manual approval
       syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true

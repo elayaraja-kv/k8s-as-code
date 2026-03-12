@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: addons-prereqs
+  namespace: argocd
+spec:
+  generators:
+    - git:
+        repoURL: https://github.com/elayaraja-kv/k8s-as-code.git
+        revision: main
+        directories:
+          - path: addons/cert-manager
+          # - path: addons/google-cas-issuer
+  template:
+    metadata:
+      name: "addon-{{path.basename}}"
+      labels:
+        cluster: prd-iac-01-ause2
+        env: prd
+        type: addon
+      annotations:
+        # Wave -1 — these must be Healthy before wave-0 addons (linkerd, etc.) sync
+        argocd.argoproj.io/sync-wave: "-1"
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/elayaraja-kv/k8s-as-code.git
+        targetRevision: main
+        path: "{{path}}"
+        helm:
+          valueFiles:
+            - values.yaml
+            - values-prd.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{path.basename}}"
+      # Prd: no auto-sync — changes require manual approval
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas

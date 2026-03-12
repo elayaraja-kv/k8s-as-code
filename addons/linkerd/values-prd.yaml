@@ -1,0 +1,14 @@
+linkerd-control-plane:
+  # Trust anchor (root CA) — prd cluster-specific ECDSA P256 cert (10yr).
+  # Generate with: step certificate create root.linkerd.cluster.local ca.crt ca.key \
+  #   --profile root-ca --no-password --insecure --kty EC --curve P-256
+  # Store ca.key in GCP Secret Manager — never commit it.
+  identityTrustAnchorsPEM: |
+    # TODO: replace with prd trust anchor PEM
+    # -----BEGIN CERTIFICATE-----
+    # ...
+    # -----END CERTIFICATE-----
+
+  clusterDomain: cluster.local
+  # Prd: HA — 3 controller replicas
+  controllerReplicas: 3

@@ -1,0 +1,11 @@
+cert-manager-google-cas-issuer:
+  # Workload Identity — matches GCP SA created in infra-as-code:
+  # <org>/gcp/prd/data-plane/iac-01/global/iam/serviceaccounts/serviceaccounts-k8s/google-cas-issuer
+  serviceAccount:
+    annotations:
+      iam.gke.io/gcp-service-account: google-cas-issuer@<prd-project-id>.iam.gserviceaccount.com
+
+clusterIssuer:
+  project: <prd-project-id>
+  location: australia-southeast2
+  caPoolId: <prd-ca-pool-name>  # terragrunt output: ca_pool_name (private-ca/linkerd)

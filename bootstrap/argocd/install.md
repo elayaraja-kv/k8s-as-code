@@ -8,13 +8,15 @@ Install ArgoCD into the cluster. Run once per cluster.
 - `kubectl`, `helm`, `gcloud` installed and on PATH
 - Workload Identity SA for external-dns applied in `infra-as-code`
 
+Authenticate to the target cluster (replace cluster name and project as needed):
+
 ```bash
 gcloud container clusters get-credentials stg-iac-01-ause2 \
   --region australia-southeast2 \
   --project iac-01
 ```
 
-## Install
+## Install ArgoCD
 
 ```bash
 helm repo add argo https://argoproj.github.io/argo-helm
@@ -46,18 +48,24 @@ kubectl -n argocd get secret argocd-initial-admin-secret \
 
 ## Apply root App-of-Apps
 
-Update the `repoURL` in these files to your actual repo URL before applying:
+Each cluster has its own root-app file under `bootstrap/`. Apply the one matching the target cluster:
 
-- `bootstrap/root-app.yaml`
-- `clusters/stg-iac-01-ause2/addons.yaml`
-- `clusters/stg-iac-01-ause2/apps.yaml`
+| Cluster | Root-app file |
+| --- | --- |
+| stg-iac-01-ause2 | `bootstrap/stg-iac-01-ause2-root-app.yaml` |
+| stg-iac-02-ause2 | `bootstrap/stg-iac-02-ause2-root-app.yaml` |
+| prd-iac-01-ause2 | `bootstrap/prd-iac-01-ause2-root-app.yaml` |
+
+Update the `repoURL` in the root-app and all ApplicationSets under `clusters/<env>/<cluster>/`
+to your actual repo URL before applying.
 
 ```bash
-kubectl apply -f bootstrap/root-app.yaml
+# Example for stg-iac-01-ause2
+kubectl apply -f bootstrap/stg-iac-01-ause2-root-app.yaml
 ```
 
 This registers the cluster folder with ArgoCD — all ApplicationSets
-in `clusters/stg-iac-01-ause2/` are then managed automatically.
+in `clusters/<env>/<cluster>/` are then managed automatically.
 
 ## Verify
 

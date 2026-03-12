@@ -18,7 +18,8 @@ spec:
     metadata:
       name: "addon-{{path.basename}}"
       labels:
-        cluster: stg-iac-01-ause2
+        cluster: prd-iac-01-ause2
+        env: prd
         type: addon
       annotations:
         # Wave 0 — syncs after wave -1 prereqs (cert-manager, google-cas-issuer) are Healthy
@@ -32,14 +33,16 @@ spec:
         helm:
           valueFiles:
             - values.yaml
-            - values-stg.yaml
+            - values-prd.yaml
+          parameters:
+            # Unique per cluster — used by external-dns TXT registry to track owned records
+            - name: external-dns.txtOwnerId
+              value: prd-iac-01-ause2
       destination:
         server: https://kubernetes.default.svc
         namespace: "{{path.basename}}"
+      # Prd: no auto-sync — changes require manual approval
       syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
