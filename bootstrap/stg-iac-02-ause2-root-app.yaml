@@ -8,9 +8,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/elayaraja-kv/k8s-as-code.git # update to your repo URL
+    repoURL: https://github.com/elayaraja-kv/k8s-as-code.git
     targetRevision: main
-    path: clusters/stg-iac-01-ause2
+    path: clusters/stg/stg-iac-02-ause2
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd

@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/elayaraja-kv/k8s-as-code.git
+    targetRevision: main
+    path: clusters/prd/prd-iac-01-ause2
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  # Prd: no auto-sync — manually trigger after review
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

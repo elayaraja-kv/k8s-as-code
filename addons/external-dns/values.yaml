@@ -8,12 +8,13 @@ external-dns:
     - ingress
     - gateway-httproute  # GKE Gateway API (CHANNEL_STANDARD enabled)
 
-  # TXT registry to track owned records — unique per cluster
-  txtOwnerId: stg-iac-01-ause2
+  # TXT registry to track owned records — unique per cluster.
+  # Overridden per cluster via ApplicationSet helm.parameters (external-dns.txtOwnerId).
+  txtOwnerId: ""
   txtPrefix: "edns-"
 
-  # sync: create and delete records (safe for stg)
-  # upsert-only: never delete (safer for prod)
+  # sync: create and delete records (stg default)
+  # upsert-only: never delete (overridden in values-prd.yaml)
   policy: sync
 
   # Kubernetes service account — annotated with GCP SA for Workload Identity

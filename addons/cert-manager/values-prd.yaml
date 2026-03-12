@@ -1,0 +1,9 @@
+cert-manager:
+  # Prd: HA — 3 replicas across zones
+  replicaCount: 3
+
+  webhook:
+    replicaCount: 3
+
+  cainjector:
+    replicaCount: 3

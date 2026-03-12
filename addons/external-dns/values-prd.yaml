@@ -1,0 +1,18 @@
+external-dns:
+  # Workload Identity — matches GCP SA created in infra-as-code:
+  # <org>/gcp/prd/data-plane/iac-01/global/iam/serviceaccounts/serviceaccounts-k8s/external-dns
+  serviceAccount:
+    annotations:
+      iam.gke.io/gcp-service-account: external-dns@<prd-project-id>.iam.gserviceaccount.com
+
+  google:
+    project: <prd-project-id>
+    zoneVisibility: ""  # manage both public and private zones
+
+  # Filter to only manage these zones — matches infra-as-code dns-zone units
+  domainFilters:
+    - <prd-domain>
+    - <prd-internal-domain>
+
+  # Prd: upsert-only — never delete records automatically
+  policy: upsert-only

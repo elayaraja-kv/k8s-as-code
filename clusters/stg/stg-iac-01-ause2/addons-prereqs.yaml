@@ -16,6 +16,7 @@ spec:
       name: "addon-{{path.basename}}"
       labels:
         cluster: stg-iac-01-ause2
+        env: stg
         type: addon
       annotations:
         # Wave -1 — these must be Healthy before wave-0 addons (linkerd, etc.) sync
